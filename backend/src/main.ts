@@ -23,6 +23,7 @@ async function bootstrap() {
     origin: configService.get<string>('FRONTEND_ORIGIN', 'http://localhost:3000'),
     credentials: true,
   });
+  
 
   app.setGlobalPrefix('api');
 
