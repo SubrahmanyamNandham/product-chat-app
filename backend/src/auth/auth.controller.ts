@@ -1,29 +1,34 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-
-class SignupDto {
-  name: string;
-  email: string;
-  password: string;
-  role: 'customer' | 'agent';
-}
-
-class LoginDto {
-  email: string;
-  password: string;
-}
+import { SignupDto } from './dto/signup.dto';
+import { LoginDto } from './dto/login.dto';
+import { RefreshDto } from './dto/refresh.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { CurrentUser } from './decorators/current-user.decorator';
+import type { RequestUser } from './decorators/current-user.decorator';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private authService: AuthService) {}
 
   @Post('signup')
-  signup(@Body() body: SignupDto) {
-    return this.authService.signup(body);
+  signup(@Body() dto: SignupDto) {
+    return this.authService.signup(dto);
   }
 
   @Post('login')
-  login(@Body() body: LoginDto) {
-    return this.authService.login(body);
+  login(@Body() dto: LoginDto) {
+    return this.authService.login(dto);
+  }
+
+  @Post('refresh')
+  refresh(@Body() dto: RefreshDto) {
+    return this.authService.refresh(dto.refreshToken);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  me(@CurrentUser() user: RequestUser) {
+    return user;
   }
 }

@@ -5,6 +5,7 @@ export declare class Product {
     description: string;
     price: number;
     imageUrl: string;
+    externalId?: number;
 }
 export declare const ProductSchema: import("mongoose").Schema<Product, import("mongoose").Model<Product, any, any, any, import("mongoose").Document<unknown, any, Product, any, {}> & Product & {
     _id: import("mongoose").Types.ObjectId;

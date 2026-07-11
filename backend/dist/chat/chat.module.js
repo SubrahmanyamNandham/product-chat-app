@@ -10,10 +10,11 @@ exports.ChatModule = void 0;
 const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const auth_module_1 = require("../auth/auth.module");
+const products_module_1 = require("../products/products.module");
 const conversation_schema_1 = require("./schemas/conversation.schema");
 const message_schema_1 = require("./schemas/message.schema");
 const chat_controller_1 = require("./chat.controller");
-const chat_gateway_1 = require("./chat.gateway");
+const chat_gateway_1 = require("./gateway/chat.gateway");
 const chat_service_1 = require("./chat.service");
 const product_schema_1 = require("../products/schemas/product.schema");
 const user_schema_1 = require("../users/schemas/user.schema");
@@ -24,6 +25,7 @@ exports.ChatModule = ChatModule = __decorate([
     (0, common_1.Module)({
         imports: [
             auth_module_1.AuthModule,
+            products_module_1.ProductsModule,
             mongoose_1.MongooseModule.forFeature([
                 { name: conversation_schema_1.Conversation.name, schema: conversation_schema_1.ConversationSchema },
                 { name: message_schema_1.Message.name, schema: message_schema_1.MessageSchema },

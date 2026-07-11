@@ -25,6 +25,15 @@ let UsersService = class UsersService {
     async findAll() {
         return this.userModel.find().select('-passwordHash').lean();
     }
+    async findById(id) {
+        return this.userModel.findById(id).select('-passwordHash').lean();
+    }
+    async findByEmail(email) {
+        return this.userModel.findOne({ email: email.toLowerCase() }).select('+passwordHash').lean();
+    }
+    async create(data) {
+        return this.userModel.create(data);
+    }
 };
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = __decorate([

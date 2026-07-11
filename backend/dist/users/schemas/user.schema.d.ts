@@ -1,4 +1,5 @@
 import { HydratedDocument } from 'mongoose';
+export type UserRole = 'customer' | 'agent';
 export type UserDocument = HydratedDocument<User>;
 export declare class User {
     name: string;

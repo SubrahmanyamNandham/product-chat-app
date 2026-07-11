@@ -10,6 +10,13 @@ export declare class ProductsService {
     }> & Required<{
         _id: import("mongoose").Types.ObjectId;
     }>)[]>;
+    findById(id: string): Promise<import("mongoose").FlattenMaps<import("mongoose").Document<unknown, {}, Product, {}, {}> & Product & {
+        _id: import("mongoose").Types.ObjectId;
+    } & {
+        __v: number;
+    }> & Required<{
+        _id: import("mongoose").Types.ObjectId;
+    }>>;
     create(payload: Partial<Product>): Promise<import("mongoose").Document<unknown, {}, import("mongoose").Document<unknown, {}, Product, {}, {}> & Product & {
         _id: import("mongoose").Types.ObjectId;
     } & {

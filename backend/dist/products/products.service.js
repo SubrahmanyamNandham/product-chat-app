@@ -17,13 +17,44 @@ const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const product_schema_1 = require("./schemas/product.schema");
+const DUMMYJSON_URL = 'https://dummyjson.com/products?limit=100';
 let ProductsService = class ProductsService {
     productModel;
     constructor(productModel) {
         this.productModel = productModel;
     }
     async findAll() {
-        return this.productModel.find().lean();
+        const response = await fetch(DUMMYJSON_URL);
+        if (!response.ok) {
+            throw new common_1.NotFoundException('Unable to load products from the catalog');
+        }
+        const payload = (await response.json());
+        const incoming = payload.products ?? [];
+        if (incoming.length > 0) {
+            await this.productModel.bulkWrite(incoming.map((item) => ({
+                updateOne: {
+                    filter: { externalId: item.id },
+                    update: {
+                        $set: {
+                            externalId: item.id,
+                            name: item.title,
+                            description: item.description,
+                            price: item.price,
+                            imageUrl: item.images?.[0] ?? item.thumbnail ?? '',
+                        },
+                    },
+                    upsert: true,
+                },
+            })), { ordered: false });
+        }
+        return this.productModel.find({ externalId: { $exists: true } }).lean();
+    }
+    async findById(id) {
+        const product = await this.productModel.findById(id).lean();
+        if (!product) {
+            throw new common_1.NotFoundException('Product not found');
+        }
+        return product;
     }
     async create(payload) {
         return this.productModel.create(payload);

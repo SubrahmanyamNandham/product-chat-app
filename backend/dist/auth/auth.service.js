@@ -41,67 +41,86 @@ var __importStar = (this && this.__importStar) || (function () {
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
-const mongoose_1 = require("@nestjs/mongoose");
-const mongoose_2 = require("mongoose");
+const config_1 = require("@nestjs/config");
 const bcrypt = __importStar(require("bcryptjs"));
-const user_schema_1 = require("../users/schemas/user.schema");
+const users_service_1 = require("../users/users.service");
+const SALT_ROUNDS = 10;
 let AuthService = class AuthService {
-    userModel;
+    usersService;
     jwtService;
-    constructor(userModel, jwtService) {
-        this.userModel = userModel;
+    configService;
+    constructor(usersService, jwtService, configService) {
+        this.usersService = usersService;
         this.jwtService = jwtService;
+        this.configService = configService;
     }
-    async signup(payload) {
-        const existing = await this.userModel.findOne({ email: payload.email.toLowerCase() });
+    async signup(dto) {
+        const existing = await this.usersService.findByEmail(dto.email);
         if (existing) {
-            throw new common_1.UnauthorizedException('User already exists');
+            throw new common_1.ConflictException('An account with this email already exists');
         }
-        const passwordHash = await bcrypt.hash(payload.password, 10);
-        const created = await this.userModel.create({
-            name: payload.name,
-            email: payload.email.toLowerCase(),
+        const passwordHash = await bcrypt.hash(dto.password, SALT_ROUNDS);
+        const user = await this.usersService.create({
+            name: dto.name,
+            email: dto.email.toLowerCase(),
             passwordHash,
-            role: payload.role,
+            role: dto.role,
         });
-        return this.buildToken(created);
+        return this.buildAuthResponse(user.id, user.email, user.role, user.name);
     }
-    async login(payload) {
-        const user = await this.userModel.findOne({ email: payload.email.toLowerCase() });
+    async login(dto) {
+        const user = await this.usersService.findByEmail(dto.email);
         if (!user) {
-            throw new common_1.UnauthorizedException('Invalid credentials');
+            throw new common_1.UnauthorizedException('Invalid email or password');
         }
-        const valid = await bcrypt.compare(payload.password, user.passwordHash);
-        if (!valid) {
-            throw new common_1.UnauthorizedException('Invalid credentials');
+        const passwordMatches = await bcrypt.compare(dto.password, user.passwordHash);
+        if (!passwordMatches) {
+            throw new common_1.UnauthorizedException('Invalid email or password');
         }
-        return this.buildToken(user);
+        return this.buildAuthResponse(user._id.toString(), user.email, user.role, user.name);
     }
-    buildToken(user) {
-        const payload = { sub: user._id.toString(), email: user.email, role: user.role };
+    async refresh(refreshToken) {
+        let payload;
+        try {
+            payload = await this.jwtService.verifyAsync(refreshToken, {
+                secret: this.configService.get('JWT_REFRESH_SECRET'),
+            });
+        }
+        catch {
+            throw new common_1.UnauthorizedException('Invalid or expired refresh token');
+        }
+        const user = await this.usersService.findById(payload.sub);
+        if (!user) {
+            throw new common_1.UnauthorizedException('User no longer exists');
+        }
+        return this.buildAuthResponse(user._id.toString(), user.email, user.role, user.name);
+    }
+    async buildAuthResponse(userId, email, role, name) {
+        const payload = { sub: userId, email, role };
+        const accessToken = await this.jwtService.signAsync(payload, {
+            secret: this.configService.get('JWT_ACCESS_SECRET'),
+            expiresIn: this.configService.get('JWT_ACCESS_EXPIRES_IN', '15m'),
+        });
+        const refreshToken = await this.jwtService.signAsync(payload, {
+            secret: this.configService.get('JWT_REFRESH_SECRET'),
+            expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN', '7d'),
+        });
         return {
-            accessToken: this.jwtService.sign(payload),
-            user: {
-                id: user._id.toString(),
-                name: user.name,
-                email: user.email,
-                role: user.role,
-            },
+            accessToken,
+            refreshToken,
+            user: { id: userId, name, email, role },
         };
     }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, mongoose_1.InjectModel)(user_schema_1.User.name)),
-    __metadata("design:paramtypes", [mongoose_2.Model,
-        jwt_1.JwtService])
+    __metadata("design:paramtypes", [users_service_1.UsersService,
+        jwt_1.JwtService,
+        config_1.ConfigService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

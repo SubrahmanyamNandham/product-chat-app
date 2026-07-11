@@ -1,34 +1,40 @@
 import { AuthService } from './auth.service';
-declare class SignupDto {
-    name: string;
-    email: string;
-    password: string;
-    role: 'customer' | 'agent';
-}
-declare class LoginDto {
-    email: string;
-    password: string;
-}
+import { SignupDto } from './dto/signup.dto';
+import { LoginDto } from './dto/login.dto';
+import { RefreshDto } from './dto/refresh.dto';
+import type { RequestUser } from './decorators/current-user.decorator';
 export declare class AuthController {
-    private readonly authService;
+    private authService;
     constructor(authService: AuthService);
-    signup(body: SignupDto): Promise<{
+    signup(dto: SignupDto): Promise<{
         accessToken: string;
+        refreshToken: string;
         user: {
             id: string;
             name: string;
             email: string;
-            role: "customer" | "agent";
+            role: import("../users/schemas/user.schema").UserRole;
         };
     }>;
-    login(body: LoginDto): Promise<{
+    login(dto: LoginDto): Promise<{
         accessToken: string;
+        refreshToken: string;
         user: {
             id: string;
             name: string;
             email: string;
-            role: "customer" | "agent";
+            role: import("../users/schemas/user.schema").UserRole;
         };
     }>;
+    refresh(dto: RefreshDto): Promise<{
+        accessToken: string;
+        refreshToken: string;
+        user: {
+            id: string;
+            name: string;
+            email: string;
+            role: import("../users/schemas/user.schema").UserRole;
+        };
+    }>;
+    me(user: RequestUser): RequestUser;
 }
-export {};

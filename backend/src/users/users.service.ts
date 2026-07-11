@@ -10,4 +10,16 @@ export class UsersService {
   async findAll() {
     return this.userModel.find().select('-passwordHash').lean();
   }
+
+  async findById(id: string) {
+    return this.userModel.findById(id).select('-passwordHash').lean();
+  }
+
+  async findByEmail(email: string) {
+    return this.userModel.findOne({ email: email.toLowerCase() }).select('+passwordHash').lean();
+  }
+
+  async create(data: { name: string; email: string; passwordHash: string; role: 'customer' | 'agent' }) {
+    return this.userModel.create(data);
+  }
 }

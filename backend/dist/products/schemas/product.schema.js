@@ -16,6 +16,7 @@ let Product = class Product {
     description;
     price;
     imageUrl;
+    externalId;
 };
 exports.Product = Product;
 __decorate([
@@ -34,6 +35,10 @@ __decorate([
     (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", String)
 ], Product.prototype, "imageUrl", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, index: true, unique: true, sparse: true }),
+    __metadata("design:type", Number)
+], Product.prototype, "externalId", void 0);
 exports.Product = Product = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], Product);

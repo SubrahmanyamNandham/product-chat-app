@@ -16,6 +16,9 @@ export class Product {
 
   @Prop({ required: true })
   imageUrl: string;
+
+  @Prop({ required: false, index: true, unique: true, sparse: true })
+  externalId?: number;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

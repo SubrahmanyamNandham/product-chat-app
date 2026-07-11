@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ProductsService } from './products.service';
 
@@ -10,6 +10,12 @@ export class ProductsController {
   @Get()
   findAll() {
     return this.productsService.findAll();
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.productsService.findById(id);
   }
 
   @UseGuards(AuthGuard('jwt'))

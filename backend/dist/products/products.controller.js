@@ -24,6 +24,9 @@ let ProductsController = class ProductsController {
     findAll() {
         return this.productsService.findAll();
     }
+    findOne(id) {
+        return this.productsService.findById(id);
+    }
     create(body) {
         return this.productsService.create(body);
     }
@@ -36,6 +39,14 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], ProductsController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, common_1.Get)(':id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], ProductsController.prototype, "findOne", null);
 __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
     (0, common_1.Post)(),

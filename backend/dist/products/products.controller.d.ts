@@ -9,6 +9,13 @@ export declare class ProductsController {
     }> & Required<{
         _id: import("mongoose").Types.ObjectId;
     }>)[]>;
+    findOne(id: string): Promise<import("mongoose").FlattenMaps<import("mongoose").Document<unknown, {}, import("./schemas/product.schema").Product, {}, {}> & import("./schemas/product.schema").Product & {
+        _id: import("mongoose").Types.ObjectId;
+    } & {
+        __v: number;
+    }> & Required<{
+        _id: import("mongoose").Types.ObjectId;
+    }>>;
     create(body: {
         name: string;
         description: string;

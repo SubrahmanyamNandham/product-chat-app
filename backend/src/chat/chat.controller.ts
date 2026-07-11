@@ -1,32 +1,70 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { RequestUser } from '../auth/decorators/current-user.decorator';
 import { ChatService } from './chat.service';
+import { ChatGateway } from './gateway/chat.gateway';
 
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('chat')
 export class ChatController {
-  constructor(private readonly chatService: ChatService) {}
+  constructor(
+    private chatService: ChatService,
+    private chatGateway: ChatGateway,
+  ) {}
 
-  @UseGuards(AuthGuard('jwt'))
   @Get('conversations')
-  getConversations() {
-    return this.chatService.getConversations();
+  async listConversations(@CurrentUser() user: RequestUser) {
+    if (user.role === 'agent') {
+      return this.chatService.listForAgentInbox();
+    }
+    return this.chatService.listForCustomer(user.userId);
   }
 
-  @UseGuards(AuthGuard('jwt'))
-  @Get('conversations/:conversationId')
-  getConversationThread(@Param('conversationId') conversationId: string) {
-    return this.chatService.getConversationThread(conversationId);
-  }
-
-  @UseGuards(AuthGuard('jwt'))
+  @Roles('customer')
   @Post('conversations')
-  createConversation(@Body() body: { customerId: string; productId: string }) {
-    return this.chatService.createConversation(body.customerId, body.productId);
+  async createConversation(
+    @CurrentUser() user: RequestUser,
+    @Body() body: { productId: string },
+  ) {
+    return this.chatService.findOrCreateConversation(user.userId, body.productId);
   }
 
-  @UseGuards(AuthGuard('jwt'))
-  @Post('messages')
-  createMessage(@Body() body: { conversationId: string; senderId: string; senderRole: 'customer' | 'agent'; content: string; status?: 'sent' | 'delivered' | 'read' }) {
-    return this.chatService.createMessage(body);
+  @Get('conversations/:id/messages')
+  async getMessages(
+    @CurrentUser() user: RequestUser,
+    @Param('id') id: string,
+    @Query('before') before?: string,
+  ) {
+    await this.chatService.assertParticipant(id, user.userId, user.role);
+    return this.chatService.getMessages(id, before);
+  }
+
+  @Post('conversations/:id/messages')
+  async sendMessage(
+    @CurrentUser() user: RequestUser,
+    @Param('id') id: string,
+    @Body() body: { content: string },
+  ) {
+    await this.chatService.assertParticipant(id, user.userId, user.role);
+    return this.chatService.createMessage(id, user.userId, user.role, body.content);
+  }
+
+  @Post('conversations/:id/read')
+  async markRead(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    await this.chatService.assertParticipant(id, user.userId, user.role);
+    const conversation = await this.chatService.markRead(id, user.role);
+    this.chatGateway.broadcastConversationUpdated(conversation);
+    return conversation;
   }
 }

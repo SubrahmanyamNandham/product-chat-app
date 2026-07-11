@@ -1,35 +1,43 @@
 import { JwtService } from '@nestjs/jwt';
-import { Model } from 'mongoose';
-import { UserDocument } from '../users/schemas/user.schema';
+import { ConfigService } from '@nestjs/config';
+import { UsersService } from '../users/users.service';
+import { UserRole } from '../users/schemas/user.schema';
+import { SignupDto } from './dto/signup.dto';
+import { LoginDto } from './dto/login.dto';
 export declare class AuthService {
-    private readonly userModel;
+    private readonly usersService;
     private readonly jwtService;
-    constructor(userModel: Model<UserDocument>, jwtService: JwtService);
-    signup(payload: {
-        name: string;
-        email: string;
-        password: string;
-        role: 'customer' | 'agent';
-    }): Promise<{
+    private readonly configService;
+    constructor(usersService: UsersService, jwtService: JwtService, configService: ConfigService);
+    signup(dto: SignupDto): Promise<{
         accessToken: string;
+        refreshToken: string;
         user: {
             id: string;
             name: string;
             email: string;
-            role: "customer" | "agent";
+            role: UserRole;
         };
     }>;
-    login(payload: {
-        email: string;
-        password: string;
-    }): Promise<{
+    login(dto: LoginDto): Promise<{
         accessToken: string;
+        refreshToken: string;
         user: {
             id: string;
             name: string;
             email: string;
-            role: "customer" | "agent";
+            role: UserRole;
         };
     }>;
-    private buildToken;
+    refresh(refreshToken: string): Promise<{
+        accessToken: string;
+        refreshToken: string;
+        user: {
+            id: string;
+            name: string;
+            email: string;
+            role: UserRole;
+        };
+    }>;
+    private buildAuthResponse;
 }
